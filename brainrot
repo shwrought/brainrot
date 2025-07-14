@@ -1,20 +1,19 @@
 local player = game.Players.LocalPlayer
-local targetSpeed = 350 -- Cambia este valor según lo rápido que quieras correr
+local speed = 100 -- Cambia esto a la velocidad que quieras
+local runService = game:GetService("RunService")
 
-local function applySpeed()
-    local character = player.Character or player.CharacterAdded:Wait()
-    local humanoid = character:WaitForChild("Humanoid")
-
-    humanoid.WalkSpeed = targetSpeed
+local function applySpeedLoop()
+	while true do
+		local character = player.Character
+		if character then
+			local humanoid = character:FindFirstChildOfClass("Humanoid")
+			if humanoid and humanoid.WalkSpeed ~= speed then
+				humanoid.WalkSpeed = speed
+			end
+		end
+		task.wait(0.1)
+	end
 end
 
--- Aplicar al cargar y reaparecer
-player.CharacterAdded:Connect(function()
-    task.wait(0.1)
-    applySpeed()
-end)
-
--- Aplicar si ya está cargado
-if player.Character then
-    task.spawn(applySpeed)
-end
+-- Ejecutar bucle en paralelo
+task.spawn(applySpeedLoop)
