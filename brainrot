@@ -1,5 +1,5 @@
 local player = game.Players.LocalPlayer
-local targetSpeed = 100 -- Cambia este valor según lo rápido que quieras correr
+local targetSpeed = 350 -- Cambia este valor según lo rápido que quieras correr
 
 local function applySpeed()
     local character = player.Character or player.CharacterAdded:Wait()
