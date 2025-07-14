@@ -1,11 +1,12 @@
--- Age of Heroes - AutoClick Toque UltraRápido (Mobile)
--- Hecho por Adrian (MACRO UI)
+-- Age of Heroes - AutoClick Suave con Animación (Mobile)
+-- Hecho por Adrian (MACRO UI) - Antiban
 
 -- CONFIGURACIÓN
-local clicksPorToque = 7        -- MÁS clics por toque
-local delayEntreClicks = 0.015  -- Delay mínimo seguro (15ms aprox)
+local clicksPorToque = 4           -- Clics por toque (ajustado para evitar baneo)
+local delayEntreClicks = 0.035     -- Delay suave, evita detección
+local activarAnimacion = true      -- Mostrar animación al atacar
 
--- FUNCIONES
+-- FUNCIÓN: Click simulado
 local function simularClick()
     local virtualUser = game:GetService("VirtualUser")
     virtualUser:Button1Down(Vector2.new(), workspace.CurrentCamera.CFrame)
@@ -13,19 +14,37 @@ local function simularClick()
     virtualUser:Button1Up(Vector2.new(), workspace.CurrentCamera.CFrame)
 end
 
--- ACTIVADOR DE TOQUE (MÓVIL)
+-- FUNCIÓN: Animación de ataque (brazo levantado rápido)
+local function animarGolpe()
+    local plr = game.Players.LocalPlayer
+    local char = plr.Character or plr.CharacterAdded:Wait()
+    local humanoide = char:FindFirstChildOfClass("Humanoid")
+
+    if humanoide then
+        local anim = Instance.new("Animation")
+        anim.AnimationId = "rbxassetid://218504594" -- animación genérica de puño (se ve real)
+        local track = humanoide:LoadAnimation(anim)
+        track:Play()
+        track:AdjustSpeed(2.5) -- velocidad rápida para que se vea fluido
+    end
+end
+
+-- DETECCIÓN DE TOQUE EN MÓVIL
 game:GetService("UserInputService").TouchStarted:Connect(function()
     for i = 1, clicksPorToque do
         task.spawn(simularClick)
+        if activarAnimacion then
+            task.spawn(animarGolpe)
+        end
         task.wait(delayEntreClicks)
     end
 end)
 
--- NOTIFICACIÓN
+-- NOTIFICACIÓN INICIAL
 pcall(function()
     game:GetService("StarterGui"):SetCore("SendNotification", {
-        Title = "AutoClick Ultra",
-        Text = "x" .. clicksPorToque .. " por toque (Rápido)",
-        Duration = 2
+        Title = "AutoGolpe Activado",
+        Text = "Golpes visibles + antidelay",
+        Duration = 3
     })
 end)
