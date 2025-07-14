@@ -1,50 +1,82 @@
--- Age of Heroes - AutoClick Suave con Animación (Mobile)
--- Hecho por Adrian (MACRO UI) - Antiban
+-- Botón flotante autoclick móvil con drag + clics reales
+-- Hecho por Adrian (MACRO UI)
 
--- CONFIGURACIÓN
-local clicksPorToque = 4           -- Clics por toque (ajustado para evitar baneo)
-local delayEntreClicks = 0.035     -- Delay suave, evita detección
-local activarAnimacion = true      -- Mostrar animación al atacar
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local VirtualUser = game:GetService("VirtualUser")
+local player = Players.LocalPlayer
+local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+gui.ResetOnSpawn = false
 
--- FUNCIÓN: Click simulado
+-- UI: Botón flotante
+local boton = Instance.new("TextButton")
+boton.Size = UDim2.new(0, 100, 0, 40)
+boton.Position = UDim2.new(0, 100, 0, 100)
+boton.BackgroundColor3 = Color3.fromRGB(255, 0, 50)
+boton.Text = "AutoClick"
+boton.TextColor3 = Color3.fromRGB(255, 255, 255)
+boton.TextScaled = true
+boton.Font = Enum.Font.GothamBlack
+boton.AnchorPoint = Vector2.new(0.5, 0.5)
+boton.Draggable = false
+boton.Parent = gui
+
+-- Variables para drag
+local dragging = false
+local dragInput, mousePos, framePos
+
+-- Función de drag
+local function activarDrag(frame)
+	frame.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+			dragging = true
+			mousePos = input.Position
+			framePos = frame.Position
+
+			input.Changed:Connect(function()
+				if input.UserInputState == Enum.UserInputState.End then
+					dragging = false
+				end
+			end)
+		end
+	end)
+
+	frame.InputChanged:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement then
+			dragInput = input
+		end
+	end)
+
+	UserInputService.InputChanged:Connect(function(input)
+		if input == dragInput and dragging then
+			local delta = input.Position - mousePos
+			frame.Position = UDim2.new(framePos.X.Scale, framePos.X.Offset + delta.X, framePos.Y.Scale, framePos.Y.Offset + delta.Y)
+		end
+	end)
+end
+
+activarDrag(boton)
+
+-- Función de autoclick real
 local function simularClick()
-    local virtualUser = game:GetService("VirtualUser")
-    virtualUser:Button1Down(Vector2.new(), workspace.CurrentCamera.CFrame)
-    wait()
-    virtualUser:Button1Up(Vector2.new(), workspace.CurrentCamera.CFrame)
+	VirtualUser:Button1Down(Vector2.new(), workspace.CurrentCamera.CFrame)
+	task.wait()
+	VirtualUser:Button1Up(Vector2.new(), workspace.CurrentCamera.CFrame)
 end
 
--- FUNCIÓN: Animación de ataque (brazo levantado rápido)
-local function animarGolpe()
-    local plr = game.Players.LocalPlayer
-    local char = plr.Character or plr.CharacterAdded:Wait()
-    local humanoide = char:FindFirstChildOfClass("Humanoid")
-
-    if humanoide then
-        local anim = Instance.new("Animation")
-        anim.AnimationId = "rbxassetid://218504594" -- animación genérica de puño (se ve real)
-        local track = humanoide:LoadAnimation(anim)
-        track:Play()
-        track:AdjustSpeed(2.5) -- velocidad rápida para que se vea fluido
-    end
-end
-
--- DETECCIÓN DE TOQUE EN MÓVIL
-game:GetService("UserInputService").TouchStarted:Connect(function()
-    for i = 1, clicksPorToque do
-        task.spawn(simularClick)
-        if activarAnimacion then
-            task.spawn(animarGolpe)
-        end
-        task.wait(delayEntreClicks)
-    end
+-- Activar clicks al tocar botón
+boton.MouseButton1Click:Connect(function()
+	for i = 1, 4 do -- 4 clics por toque, ajustable
+		task.spawn(simularClick)
+		task.wait(0.035)
+	end
 end)
 
--- NOTIFICACIÓN INICIAL
+-- Notificación
 pcall(function()
-    game:GetService("StarterGui"):SetCore("SendNotification", {
-        Title = "AutoGolpe Activado",
-        Text = "Golpes visibles + antidelay",
-        Duration = 3
-    })
+	game:GetService("StarterGui"):SetCore("SendNotification", {
+		Title = "Botón Flotante Listo",
+		Text = "Toca para autoclick sin bug de cámara",
+		Duration = 3
+	})
 end)
