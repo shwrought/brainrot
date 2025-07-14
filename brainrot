@@ -1,1 +1,87 @@
-loadstring(game:HttpGet('https://raw.githubusercontent.com/m00ndiety/Steal-a-brainrot/refs/heads/main/Steal-a-Brainrot'))()
+-- Steal a Brainrot: TP Fly Script (sin Key)
+-- Hecho para velocidad extrema y traspasar estructuras
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local player = Players.LocalPlayer
+local basePos = nil
+local moving = false
+local speed = 30 -- Aumenta si quieres más brutalidad
+
+local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+gui.Name = "BrainrotTPGui"
+gui.ResetOnSpawn = false
+
+-- Crear botón de guardar base
+local saveBtn = Instance.new("TextButton", gui)
+saveBtn.Size = UDim2.new(0, 160, 0, 40)
+saveBtn.Position = UDim2.new(0, 20, 0, 100)
+saveBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+saveBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+saveBtn.Text = "📍 Guardar Base"
+saveBtn.Font = Enum.Font.SourceSansBold
+saveBtn.TextSize = 18
+saveBtn.Parent = gui
+
+-- Crear botón de volar a base
+local tpBtn = Instance.new("TextButton", gui)
+tpBtn.Size = UDim2.new(0, 160, 0, 40)
+tpBtn.Position = UDim2.new(0, 20, 0, 150)
+tpBtn.BackgroundColor3 = Color3.fromRGB(100, 0, 0)
+tpBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+tpBtn.Text = "🚀 Volar a Base"
+tpBtn.Font = Enum.Font.SourceSansBold
+tpBtn.TextSize = 18
+tpBtn.Parent = gui
+
+gui.Parent = player:WaitForChild("PlayerGui")
+
+-- Forzar Noclip mientras se mueve
+RunService.Stepped:Connect(function()
+    if moving then
+        local char = player.Character
+        if char then
+            for _, part in ipairs(char:GetDescendants()) do
+                if part:IsA("BasePart") and part.CanCollide then
+                    part.CanCollide = false
+                end
+            end
+        end
+    end
+end)
+
+-- Guardar posición actual
+saveBtn.MouseButton1Click:Connect(function()
+    local char = player.Character or player.CharacterAdded:Wait()
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if hrp then
+        basePos = hrp.Position
+        saveBtn.Text = "✅ Base Guardada"
+        wait(1.5)
+        saveBtn.Text = "📍 Guardar Base"
+    end
+end)
+
+-- Mover volando a la base
+tpBtn.MouseButton1Click:Connect(function()
+    local char = player.Character or player.CharacterAdded:Wait()
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+
+    if basePos and hrp then
+        moving = true
+        tpBtn.Text = "🚀 Volando..."
+        while moving and (hrp.Position - basePos).Magnitude > 5 do
+            local direction = (basePos - hrp.Position).Unit
+            hrp.CFrame = hrp.CFrame + direction * speed
+            wait(0.02)
+        end
+        moving = false
+        tpBtn.Text = "✅ Llegaste"
+        wait(1.5)
+        tpBtn.Text = "🚀 Volar a Base"
+    else
+        tpBtn.Text = "❌ No hay base"
+        wait(1.5)
+        tpBtn.Text = "🚀 Volar a Base"
+    end
+end)
