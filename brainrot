@@ -1,17 +1,17 @@
--- ✅ Botón flotante + AutoClick REAL para MÓVIL
--- Funciona sin VirtualUser. Compatible con autoclicks reales
--- Ubicar en StarterPlayer > StarterPlayerScripts como LocalScript
-
-local Players = game:GetService("Players")
+-- ✅ Botón flotante para activar Tool (click real en mobile)
+local player = game:GetService("Players").LocalPlayer
 local UIS = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
-
-local player = Players.LocalPlayer
+local StarterGui = game:GetService("StarterGui")
 local PlayerGui = player:WaitForChild("PlayerGui")
+local Backpack = player:WaitForChild("Backpack")
+
+-- Esperar a que la Tool esté lista
+local tool = Backpack:WaitForChild("ClickTool")
+tool.Parent = player.Character -- Equipar automáticamente
 
 -- Crear GUI
 local gui = Instance.new("ScreenGui")
-gui.Name = "AutoClickUI"
+gui.Name = "AutoClickToolUI"
 gui.ResetOnSpawn = false
 gui.IgnoreGuiInset = true
 gui.Parent = PlayerGui
@@ -27,8 +27,10 @@ button.TextScaled = true
 button.Font = Enum.Font.GothamBold
 button.Parent = gui
 
--- Drag (mover botón)
-local dragging, dragStart, startPos, dragInput
+-- Drag
+local dragging = false
+local dragStart, startPos, dragInput
+
 local function updateDrag(input)
 	local delta = input.Position - dragStart
 	button.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X,
@@ -60,33 +62,19 @@ UIS.InputChanged:Connect(function(input)
 	end
 end)
 
--- 🧠 AutoClick real usando InputSimulator (emula clicks válidos)
-local clicActivo = false
-
+-- AutoClick activado al tocar botón
 button.MouseButton1Click:Connect(function()
-	if clicActivo then return end
-	clicActivo = true
-
-	spawn(function()
-		for i = 1, 4 do
-			-- Simula un toque real (el juego lo detecta como golpe)
-			local fakeInput = Instance.new("BindableEvent")
-			UIS.InputBegan:Fire({
-				UserInputType = Enum.UserInputType.Touch,
-				UserInputState = Enum.UserInputState.Begin,
-				Position = Vector3.new(0, 0, 0),
-			}, false)
-			task.wait(0.035)
-		end
-		clicActivo = false
-	end)
+	for i = 1, 4 do
+		tool:Activate() -- Simula golpe real
+		task.wait(0.04)
+	end
 end)
 
--- Notificación al jugador
+-- Notificación
 pcall(function()
-	game:GetService("StarterGui"):SetCore("SendNotification", {
-		Title = "AutoClick Activo",
-		Text = "Listo para usar en móvil con golpes reales",
+	StarterGui:SetCore("SendNotification", {
+		Title = "AutoClick Tool",
+		Text = "Clics reales activados por botón",
 		Duration = 3
 	})
 end)
