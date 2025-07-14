@@ -1,51 +1,76 @@
--- UI + TP Script - Guardar y volver a un punto
 local player = game.Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
+local char = player.Character or player.CharacterAdded:Wait()
+local hrp = char:WaitForChild("HumanoidRootPart")
+
+-- Guardar posición base
 local basePosition = nil
 
--- Crear Interfaz
-local ScreenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
-ScreenGui.Name = "TPGui"
+-- Función para destruir sistemas de corrección del juego
+local function bypassTP()
+    -- Intenta destruir scripts locales que puedan corregir la posición
+    for _, v in pairs(char:GetDescendants()) do
+        if v:IsA("LocalScript") or v:IsA("Script") then
+            pcall(function()
+                v:Destroy()
+            end)
+        end
+    end
+    -- Eliminar estados físicos que impidan moverse
+    if char:FindFirstChild("Humanoid") then
+        char.Humanoid:ChangeState(11)
+    end
+end
 
-local saveBtn = Instance.new("TextButton")
-saveBtn.Parent = ScreenGui
-saveBtn.Text = "📍 Guardar Posición"
-saveBtn.Position = UDim2.new(0, 20, 0, 100)
-saveBtn.Size = UDim2.new(0, 180, 0, 40)
-saveBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-saveBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-saveBtn.Font = Enum.Font.SourceSansBold
-saveBtn.TextSize = 18
+-- Crear UI
+local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+gui.Name = "BypassTPGui"
 
-local tpBtn = Instance.new("TextButton")
-tpBtn.Parent = ScreenGui
-tpBtn.Text = "🚀 Teleport a Base"
-tpBtn.Position = UDim2.new(0, 20, 0, 150)
-tpBtn.Size = UDim2.new(0, 180, 0, 40)
-tpBtn.BackgroundColor3 = Color3.fromRGB(60, 0, 0)
-tpBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-tpBtn.Font = Enum.Font.SourceSansBold
-tpBtn.TextSize = 18
+local save = Instance.new("TextButton", gui)
+save.Size = UDim2.new(0, 160, 0, 40)
+save.Position = UDim2.new(0, 20, 0, 100)
+save.Text = "📍 Guardar Base"
+save.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+save.TextColor3 = Color3.fromRGB(255, 255, 255)
+save.Font = Enum.Font.SourceSansBold
+save.TextSize = 18
 
--- Función para guardar la posición
-saveBtn.MouseButton1Click:Connect(function()
-    character = player.Character or player.CharacterAdded:Wait()
-    if character and character:FindFirstChild("HumanoidRootPart") then
-        basePosition = character.HumanoidRootPart.Position
-        saveBtn.Text = "✅ Posición Guardada"
+local tp = Instance.new("TextButton", gui)
+tp.Size = UDim2.new(0, 160, 0, 40)
+tp.Position = UDim2.new(0, 20, 0, 150)
+tp.Text = "🚀 Teleport Forzado"
+tp.BackgroundColor3 = Color3.fromRGB(80, 0, 0)
+tp.TextColor3 = Color3.fromRGB(255, 255, 255)
+tp.Font = Enum.Font.SourceSansBold
+tp.TextSize = 18
+
+-- Guardar base
+save.MouseButton1Click:Connect(function()
+    char = player.Character or player.CharacterAdded:Wait()
+    hrp = char:FindFirstChild("HumanoidRootPart")
+    if hrp then
+        basePosition = hrp.Position
+        save.Text = "✅ Guardado"
         wait(1)
-        saveBtn.Text = "📍 Guardar Posición"
+        save.Text = "📍 Guardar Base"
     end
 end)
 
--- Función para teletransportar
-tpBtn.MouseButton1Click:Connect(function()
-    character = player.Character or player.CharacterAdded:Wait()
-    if basePosition and character and character:FindFirstChild("HumanoidRootPart") then
-        character.HumanoidRootPart.CFrame = CFrame.new(basePosition + Vector3.new(0, 5, 0))
+-- Teleport con bypass
+tp.MouseButton1Click:Connect(function()
+    char = player.Character or player.CharacterAdded:Wait()
+    hrp = char:FindFirstChild("HumanoidRootPart")
+
+    if basePosition and hrp then
+        bypassTP() -- Intento de desactivar correcciones
+
+        -- Mover pieza por pieza
+        for i = 1, 10 do
+            hrp.CFrame = CFrame.new(basePosition + Vector3.new(0, 5, 0))
+            wait(0.1) -- repetición para forzar el TP
+        end
     else
-        tpBtn.Text = "⚠️ No hay posición guardada"
+        tp.Text = "⚠️ No hay base guardada"
         wait(1.5)
-        tpBtn.Text = "🚀 Teleport a Base"
+        tp.Text = "🚀 Teleport Forzado"
     end
 end)
