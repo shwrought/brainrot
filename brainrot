@@ -1,14 +1,20 @@
 local player = game.Players.LocalPlayer
+local targetSpeed = 100 -- Cambia este valor según lo rápido que quieras correr
 
-player.CharacterAdded:Connect(function(char)
-	local hum = char:WaitForChild("Humanoid")
-	hum.WalkSpeed = 200 -- Ajusta la velocidad que desees aquí
+local function applySpeed()
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoid = character:WaitForChild("Humanoid")
+
+    humanoid.WalkSpeed = targetSpeed
+end
+
+-- Aplicar al cargar y reaparecer
+player.CharacterAdded:Connect(function()
+    task.wait(0.1)
+    applySpeed()
 end)
 
--- Si el personaje ya está cargado
+-- Aplicar si ya está cargado
 if player.Character then
-	local hum = player.Character:FindFirstChildOfClass("Humanoid")
-	if hum then
-		hum.WalkSpeed = 200 -- Velocidad inicial
-	end
+    task.spawn(applySpeed)
 end
