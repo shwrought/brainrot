@@ -1,13 +1,24 @@
 local player = game.Players.LocalPlayer
 local char = player.Character or player.CharacterAdded:Wait()
 local hrp = char:WaitForChild("HumanoidRootPart")
-local tweenService = game:GetService("TweenService")
 
 local basePosition = nil
+local moving = false
+
+-- Forzar Noclip en cada frame
+game:GetService("RunService").Stepped:Connect(function()
+    if moving then
+        for _, v in pairs(char:GetDescendants()) do
+            if v:IsA("BasePart") and v.CanCollide == true then
+                v.CanCollide = false
+            end
+        end
+    end
+end)
 
 -- UI
 local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
-gui.Name = "TweenTPGui"
+gui.Name = "MegaTPGui"
 
 local saveBtn = Instance.new("TextButton", gui)
 saveBtn.Text = "📍 Guardar Base"
@@ -19,43 +30,46 @@ saveBtn.Font = Enum.Font.SourceSansBold
 saveBtn.TextSize = 18
 
 local tpBtn = Instance.new("TextButton", gui)
-tpBtn.Text = "🚶 Ir a Base"
+tpBtn.Text = "☠️ Traspasar Forzado"
 tpBtn.Size = UDim2.new(0, 160, 0, 40)
 tpBtn.Position = UDim2.new(0, 20, 0, 150)
-tpBtn.BackgroundColor3 = Color3.fromRGB(60, 0, 0)
+tpBtn.BackgroundColor3 = Color3.fromRGB(100, 0, 0)
 tpBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 tpBtn.Font = Enum.Font.SourceSansBold
 tpBtn.TextSize = 18
 
--- Guardar posición
+-- Guardar Base
 saveBtn.MouseButton1Click:Connect(function()
     char = player.Character or player.CharacterAdded:Wait()
     hrp = char:FindFirstChild("HumanoidRootPart")
     if hrp then
         basePosition = hrp.Position
-        saveBtn.Text = "✅ Base Guardada"
+        saveBtn.Text = "✅ Guardado"
         wait(1)
         saveBtn.Text = "📍 Guardar Base"
     end
 end)
 
--- Tween TP
+-- Movimiento directo por CFrame
 tpBtn.MouseButton1Click:Connect(function()
-    char = player.Character or player.CharacterAdded:Wait()
-    hrp = char:FindFirstChild("HumanoidRootPart")
-
-    if basePosition and hrp then
-        local dist = (basePosition - hrp.Position).Magnitude
-        local timeToMove = dist / 100 -- Ajusta velocidad aquí (más bajo = más rápido)
-
-        local tween = tweenService:Create(hrp, TweenInfo.new(timeToMove, Enum.EasingStyle.Linear), {
-            CFrame = CFrame.new(basePosition + Vector3.new(0, 3, 0))
-        })
-
-        tween:Play()
-    else
-        tpBtn.Text = "⚠️ No guardaste la base"
+    if not basePosition then
+        tpBtn.Text = "❌ Sin base guardada"
         wait(1.5)
-        tpBtn.Text = "🚶 Ir a Base"
+        tpBtn.Text = "☠️ Traspasar Forzado"
+        return
     end
+
+    moving = true
+    local speed = 10 -- Cuanto más alto, más rápido (pero más detectable)
+    
+    while moving and hrp and (hrp.Position - basePosition).Magnitude > 5 do
+        local direction = (basePosition - hrp.Position).Unit
+        hrp.CFrame = hrp.CFrame + direction * speed
+        wait(0.02)
+    end
+
+    moving = false
+    tpBtn.Text = "✅ Llegaste"
+    wait(1.5)
+    tpBtn.Text = "☠️ Traspasar Forzado"
 end)
