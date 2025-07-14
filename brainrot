@@ -1,18 +1,15 @@
--- Steal a Brainrot: TP Fly Script (sin Key)
--- Hecho para velocidad extrema y traspasar estructuras
-
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
 local basePos = nil
 local moving = false
-local speed = 30 -- Aumenta si quieres más brutalidad
+local flyHeight = 300 -- altura para sobrevolar paredes
+local speed = 35
 
 local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
-gui.Name = "BrainrotTPGui"
+gui.Name = "SkyFlyTP"
 gui.ResetOnSpawn = false
 
--- Crear botón de guardar base
 local saveBtn = Instance.new("TextButton", gui)
 saveBtn.Size = UDim2.new(0, 160, 0, 40)
 saveBtn.Position = UDim2.new(0, 20, 0, 100)
@@ -23,20 +20,19 @@ saveBtn.Font = Enum.Font.SourceSansBold
 saveBtn.TextSize = 18
 saveBtn.Parent = gui
 
--- Crear botón de volar a base
 local tpBtn = Instance.new("TextButton", gui)
 tpBtn.Size = UDim2.new(0, 160, 0, 40)
 tpBtn.Position = UDim2.new(0, 20, 0, 150)
 tpBtn.BackgroundColor3 = Color3.fromRGB(100, 0, 0)
 tpBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-tpBtn.Text = "🚀 Volar a Base"
+tpBtn.Text = "🚀 Volar sobre paredes"
 tpBtn.Font = Enum.Font.SourceSansBold
 tpBtn.TextSize = 18
 tpBtn.Parent = gui
 
 gui.Parent = player:WaitForChild("PlayerGui")
 
--- Forzar Noclip mientras se mueve
+-- Forzar Noclip
 RunService.Stepped:Connect(function()
     if moving then
         local char = player.Character
@@ -50,7 +46,7 @@ RunService.Stepped:Connect(function()
     end
 end)
 
--- Guardar posición actual
+-- Guardar base
 saveBtn.MouseButton1Click:Connect(function()
     local char = player.Character or player.CharacterAdded:Wait()
     local hrp = char:FindFirstChild("HumanoidRootPart")
@@ -62,26 +58,46 @@ saveBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- Mover volando a la base
+-- Subida, vuelo horizontal, caída
 tpBtn.MouseButton1Click:Connect(function()
     local char = player.Character or player.CharacterAdded:Wait()
     local hrp = char:FindFirstChild("HumanoidRootPart")
-
-    if basePos and hrp then
-        moving = true
-        tpBtn.Text = "🚀 Volando..."
-        while moving and (hrp.Position - basePos).Magnitude > 5 do
-            local direction = (basePos - hrp.Position).Unit
-            hrp.CFrame = hrp.CFrame + direction * speed
-            wait(0.02)
-        end
-        moving = false
-        tpBtn.Text = "✅ Llegaste"
-        wait(1.5)
-        tpBtn.Text = "🚀 Volar a Base"
-    else
+    if not basePos or not hrp then
         tpBtn.Text = "❌ No hay base"
         wait(1.5)
-        tpBtn.Text = "🚀 Volar a Base"
+        tpBtn.Text = "🚀 Volar sobre paredes"
+        return
     end
+
+    moving = true
+    tpBtn.Text = "🛫 Elevando..."
+
+    -- 1. Elevar
+    local targetAbove = hrp.Position + Vector3.new(0, flyHeight, 0)
+    while (hrp.Position - targetAbove).Magnitude > 5 do
+        hrp.CFrame = hrp.CFrame + Vector3.new(0, speed, 0)
+        wait(0.02)
+    end
+
+    -- 2. Volar horizontal
+    tpBtn.Text = "🛸 Volando..."
+    local horizontalTarget = Vector3.new(basePos.X, hrp.Position.Y, basePos.Z)
+    while (hrp.Position - horizontalTarget).Magnitude > 5 do
+        local dir = (horizontalTarget - hrp.Position).Unit
+        hrp.CFrame = hrp.CFrame + dir * speed
+        wait(0.02)
+    end
+
+    -- 3. Caer
+    tpBtn.Text = "🪂 Descendiendo..."
+    local finalTarget = basePos + Vector3.new(0, 5, 0)
+    while (hrp.Position - finalTarget).Magnitude > 5 do
+        hrp.CFrame = hrp.CFrame - Vector3.new(0, speed, 0)
+        wait(0.02)
+    end
+
+    moving = false
+    tpBtn.Text = "✅ Llegaste"
+    wait(1.5)
+    tpBtn.Text = "🚀 Volar sobre paredes"
 end)
