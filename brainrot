@@ -1,19 +1,31 @@
 local player = game.Players.LocalPlayer
-local speed = 100 -- Cambia esto a la velocidad que quieras
+local speed = 100 -- Velocidad deseada
 local runService = game:GetService("RunService")
 
-local function applySpeedLoop()
-	while true do
-		local character = player.Character
-		if character then
-			local humanoid = character:FindFirstChildOfClass("Humanoid")
-			if humanoid and humanoid.WalkSpeed ~= speed then
-				humanoid.WalkSpeed = speed
-			end
-		end
-		task.wait(0.1)
-	end
+local function lockSpeed(humanoid)
+    -- Hook del PropertyChangedSignal
+    humanoid:GetPropertyChangedSignal("WalkSpeed"):Connect(function()
+        if humanoid.WalkSpeed < speed then
+            humanoid.WalkSpeed = speed
+        end
+    end)
+
+    -- Aplicación constante por si el servidor lo fuerza brutalmente
+    while humanoid.Parent do
+        if humanoid.WalkSpeed ~= speed then
+            humanoid.WalkSpeed = speed
+        end
+        task.wait(0.1)
+    end
 end
 
--- Ejecutar bucle en paralelo
-task.spawn(applySpeedLoop)
+-- Esperar personaje
+local function init()
+    local char = player.Character or player.CharacterAdded:Wait()
+    local hum = char:WaitForChild("Humanoid")
+    hum.WalkSpeed = speed
+    task.spawn(function() lockSpeed(hum) end)
+end
+
+player.CharacterAdded:Connect(init)
+if player.Character then task.spawn(init) end
