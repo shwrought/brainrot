@@ -1,34 +1,38 @@
--- ✅ Botón flotante autoclick (Mobile compatible)
--- MACRO UI - Por Adrian
-local player = game:GetService("Players").LocalPlayer
-local UIS = game:GetService("UserInputService")
-local VirtualUser = game:GetService("VirtualUser")
+-- ✅ Botón flotante autoclick para MOBILE (Funcional garantizado)
+-- Colocar en: StarterPlayer → StarterPlayerScripts
 
--- Crear GUI
+local Players = game:GetService("Players")
+local VirtualUser = game:GetService("VirtualUser")
+local UIS = game:GetService("UserInputService")
+
+local player = Players.LocalPlayer
+local PlayerGui = player:WaitForChild("PlayerGui")
+
+-- Espera que el Character exista completamente
+repeat wait() until player.Character and player.Character:FindFirstChild("Humanoid")
+
+-- Crear GUI flotante
 local gui = Instance.new("ScreenGui")
-gui.Name = "AutoClickGUI"
+gui.Name = "AutoClickUI"
 gui.ResetOnSpawn = false
-gui.Parent = player:WaitForChild("PlayerGui")
+gui.IgnoreGuiInset = true
+gui.Parent = PlayerGui
 
 -- Crear botón flotante
 local button = Instance.new("TextButton")
-button.Name = "AutoClickButton"
 button.Size = UDim2.new(0, 100, 0, 40)
 button.Position = UDim2.new(0, 150, 0, 150)
-button.BackgroundColor3 = Color3.fromRGB(200, 0, 40)
-button.Text = "AutoClick"
-button.TextColor3 = Color3.fromRGB(255, 255, 255)
-button.Font = Enum.Font.GothamBold
+button.BackgroundColor3 = Color3.fromRGB(255, 0, 40)
+button.TextColor3 = Color3.new(1, 1, 1)
 button.TextScaled = true
+button.Font = Enum.Font.GothamBold
+button.Text = "AutoClick"
 button.Parent = gui
 
--- Hacer botón movible con Touch
-local dragging = false
-local dragInput
-local dragStart
-local startPos
+-- Drag (Movible)
+local dragging, dragStart, startPos, dragInput
 
-local function update(input)
+local function updateDrag(input)
 	local delta = input.Position - dragStart
 	button.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X,
 		startPos.Y.Scale, startPos.Y.Offset + delta.Y)
@@ -39,7 +43,6 @@ button.InputBegan:Connect(function(input)
 		dragging = true
 		dragStart = input.Position
 		startPos = button.Position
-
 		input.Changed:Connect(function()
 			if input.UserInputState == Enum.UserInputState.End then
 				dragging = false
@@ -56,30 +59,30 @@ end)
 
 UIS.InputChanged:Connect(function(input)
 	if input == dragInput and dragging then
-		update(input)
+		updateDrag(input)
 	end
 end)
 
--- Función de autoclick real
+-- Clic simulado real
 local function simularClick()
 	VirtualUser:Button1Down(Vector2.new(), workspace.CurrentCamera.CFrame)
 	task.wait()
 	VirtualUser:Button1Up(Vector2.new(), workspace.CurrentCamera.CFrame)
 end
 
--- Al presionar el botón, hace clics simulados
+-- Al presionar el botón: autoclick burst
 button.MouseButton1Click:Connect(function()
-	for i = 1, 4 do -- Número de clics por toque
+	for i = 1, 4 do
 		task.spawn(simularClick)
-		task.wait(0.035) -- Delay entre clics
+		task.wait(0.035)
 	end
 end)
 
--- Notificación opcional
+-- Confirmación visual
 pcall(function()
 	game:GetService("StarterGui"):SetCore("SendNotification", {
-		Title = "AutoClick Activo",
-		Text = "Botón flotante listo para usar.",
+		Title = "AutoClick Cargado",
+		Text = "Botón flotante activado",
 		Duration = 3
 	})
 end)
