@@ -1,31 +1,31 @@
-local player = game.Players.LocalPlayer
-local speed = 100 -- Velocidad deseada
-local runService = game:GetService("RunService")
+-- Age of Heroes - AutoClick Toque UltraRápido (Mobile)
+-- Hecho por Adrian (MACRO UI)
 
-local function lockSpeed(humanoid)
-    -- Hook del PropertyChangedSignal
-    humanoid:GetPropertyChangedSignal("WalkSpeed"):Connect(function()
-        if humanoid.WalkSpeed < speed then
-            humanoid.WalkSpeed = speed
-        end
-    end)
+-- CONFIGURACIÓN
+local clicksPorToque = 7        -- MÁS clics por toque
+local delayEntreClicks = 0.015  -- Delay mínimo seguro (15ms aprox)
 
-    -- Aplicación constante por si el servidor lo fuerza brutalmente
-    while humanoid.Parent do
-        if humanoid.WalkSpeed ~= speed then
-            humanoid.WalkSpeed = speed
-        end
-        task.wait(0.1)
+-- FUNCIONES
+local function simularClick()
+    local virtualUser = game:GetService("VirtualUser")
+    virtualUser:Button1Down(Vector2.new(), workspace.CurrentCamera.CFrame)
+    wait()
+    virtualUser:Button1Up(Vector2.new(), workspace.CurrentCamera.CFrame)
+end
+
+-- ACTIVADOR DE TOQUE (MÓVIL)
+game:GetService("UserInputService").TouchStarted:Connect(function()
+    for i = 1, clicksPorToque do
+        task.spawn(simularClick)
+        task.wait(delayEntreClicks)
     end
-end
+end)
 
--- Esperar personaje
-local function init()
-    local char = player.Character or player.CharacterAdded:Wait()
-    local hum = char:WaitForChild("Humanoid")
-    hum.WalkSpeed = speed
-    task.spawn(function() lockSpeed(hum) end)
-end
-
-player.CharacterAdded:Connect(init)
-if player.Character then task.spawn(init) end
+-- NOTIFICACIÓN
+pcall(function()
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "AutoClick Ultra",
+        Text = "x" .. clicksPorToque .. " por toque (Rápido)",
+        Duration = 2
+    })
+end)
