@@ -1,61 +1,64 @@
--- Botón flotante autoclick móvil con drag + clics reales
--- Hecho por Adrian (MACRO UI)
-
-local Players = game:GetService("Players")
-local UserInputService = game:GetService("UserInputService")
+-- ✅ Botón flotante autoclick (Mobile compatible)
+-- MACRO UI - Por Adrian
+local player = game:GetService("Players").LocalPlayer
+local UIS = game:GetService("UserInputService")
 local VirtualUser = game:GetService("VirtualUser")
-local player = Players.LocalPlayer
-local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+
+-- Crear GUI
+local gui = Instance.new("ScreenGui")
+gui.Name = "AutoClickGUI"
 gui.ResetOnSpawn = false
+gui.Parent = player:WaitForChild("PlayerGui")
 
--- UI: Botón flotante
-local boton = Instance.new("TextButton")
-boton.Size = UDim2.new(0, 100, 0, 40)
-boton.Position = UDim2.new(0, 100, 0, 100)
-boton.BackgroundColor3 = Color3.fromRGB(255, 0, 50)
-boton.Text = "AutoClick"
-boton.TextColor3 = Color3.fromRGB(255, 255, 255)
-boton.TextScaled = true
-boton.Font = Enum.Font.GothamBlack
-boton.AnchorPoint = Vector2.new(0.5, 0.5)
-boton.Draggable = false
-boton.Parent = gui
+-- Crear botón flotante
+local button = Instance.new("TextButton")
+button.Name = "AutoClickButton"
+button.Size = UDim2.new(0, 100, 0, 40)
+button.Position = UDim2.new(0, 150, 0, 150)
+button.BackgroundColor3 = Color3.fromRGB(200, 0, 40)
+button.Text = "AutoClick"
+button.TextColor3 = Color3.fromRGB(255, 255, 255)
+button.Font = Enum.Font.GothamBold
+button.TextScaled = true
+button.Parent = gui
 
--- Variables para drag
+-- Hacer botón movible con Touch
 local dragging = false
-local dragInput, mousePos, framePos
+local dragInput
+local dragStart
+local startPos
 
--- Función de drag
-local function activarDrag(frame)
-	frame.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
-			dragging = true
-			mousePos = input.Position
-			framePos = frame.Position
-
-			input.Changed:Connect(function()
-				if input.UserInputState == Enum.UserInputState.End then
-					dragging = false
-				end
-			end)
-		end
-	end)
-
-	frame.InputChanged:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement then
-			dragInput = input
-		end
-	end)
-
-	UserInputService.InputChanged:Connect(function(input)
-		if input == dragInput and dragging then
-			local delta = input.Position - mousePos
-			frame.Position = UDim2.new(framePos.X.Scale, framePos.X.Offset + delta.X, framePos.Y.Scale, framePos.Y.Offset + delta.Y)
-		end
-	end)
+local function update(input)
+	local delta = input.Position - dragStart
+	button.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X,
+		startPos.Y.Scale, startPos.Y.Offset + delta.Y)
 end
 
-activarDrag(boton)
+button.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+		dragging = true
+		dragStart = input.Position
+		startPos = button.Position
+
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then
+				dragging = false
+			end
+		end)
+	end
+end)
+
+button.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement then
+		dragInput = input
+	end
+end)
+
+UIS.InputChanged:Connect(function(input)
+	if input == dragInput and dragging then
+		update(input)
+	end
+end)
 
 -- Función de autoclick real
 local function simularClick()
@@ -64,19 +67,19 @@ local function simularClick()
 	VirtualUser:Button1Up(Vector2.new(), workspace.CurrentCamera.CFrame)
 end
 
--- Activar clicks al tocar botón
-boton.MouseButton1Click:Connect(function()
-	for i = 1, 4 do -- 4 clics por toque, ajustable
+-- Al presionar el botón, hace clics simulados
+button.MouseButton1Click:Connect(function()
+	for i = 1, 4 do -- Número de clics por toque
 		task.spawn(simularClick)
-		task.wait(0.035)
+		task.wait(0.035) -- Delay entre clics
 	end
 end)
 
--- Notificación
+-- Notificación opcional
 pcall(function()
 	game:GetService("StarterGui"):SetCore("SendNotification", {
-		Title = "Botón Flotante Listo",
-		Text = "Toca para autoclick sin bug de cámara",
+		Title = "AutoClick Activo",
+		Text = "Botón flotante listo para usar.",
 		Duration = 3
 	})
 end)
