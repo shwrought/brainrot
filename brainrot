@@ -1,71 +1,86 @@
--- SCRIPT: Caminar a base sin ser regresado por el servidor
+-- Vuelo Forzado Hacia Base con Noclip Extremo
 
 local player = game.Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local humanoid = character:WaitForChild("Humanoid")
+local RunService = game:GetService("RunService")
 
 local basePosition = nil
+local moving = false
+local speed = 25 -- Puedes subir hasta 50 si el servidor lo permite
 
--- Crear GUI
-local gui = Instance.new("ScreenGui")
-gui.Name = "SafeTPGui"
+local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+gui.Name = "FlyTPGui"
 gui.ResetOnSpawn = false
-gui.Parent = player:WaitForChild("PlayerGui")
 
--- Botón Guardar Base
-local saveBtn = Instance.new("TextButton")
-saveBtn.Name = "SaveBaseButton"
-saveBtn.Parent = gui
+-- Guardar Base
+local saveBtn = Instance.new("TextButton", gui)
+saveBtn.Text = "📍 Guardar Base"
 saveBtn.Size = UDim2.new(0, 160, 0, 40)
 saveBtn.Position = UDim2.new(0, 20, 0, 100)
-saveBtn.Text = "📍 Guardar Base"
-saveBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+saveBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 saveBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 saveBtn.Font = Enum.Font.SourceSansBold
 saveBtn.TextSize = 18
+saveBtn.Parent = gui
 
--- Botón Caminar a Base
-local walkBtn = Instance.new("TextButton")
-walkBtn.Name = "WalkToBaseButton"
-walkBtn.Parent = gui
-walkBtn.Size = UDim2.new(0, 160, 0, 40)
-walkBtn.Position = UDim2.new(0, 20, 0, 150)
-walkBtn.Text = "🚶 Ir a Base"
-walkBtn.BackgroundColor3 = Color3.fromRGB(0, 90, 0)
-walkBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-walkBtn.Font = Enum.Font.SourceSansBold
-walkBtn.TextSize = 18
+-- Ir Volando
+local tpBtn = Instance.new("TextButton", gui)
+tpBtn.Text = "🚀 Volar a Base"
+tpBtn.Size = UDim2.new(0, 160, 0, 40)
+tpBtn.Position = UDim2.new(0, 20, 0, 150)
+tpBtn.BackgroundColor3 = Color3.fromRGB(120, 0, 0)
+tpBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+tpBtn.Font = Enum.Font.SourceSansBold
+tpBtn.TextSize = 18
+tpBtn.Parent = gui
 
--- Función Guardar Base
+gui.Parent = player:WaitForChild("PlayerGui")
+
+-- Noclip cada frame mientras se mueve
+RunService.Stepped:Connect(function()
+    if moving then
+        local char = player.Character
+        if char then
+            for _, part in pairs(char:GetDescendants()) do
+                if part:IsA("BasePart") and part.CanCollide then
+                    part.CanCollide = false
+                end
+            end
+        end
+    end
+end)
+
+-- Guardar base
 saveBtn.MouseButton1Click:Connect(function()
-    character = player.Character or player.CharacterAdded:Wait()
-    local hrp = character:FindFirstChild("HumanoidRootPart")
+    local char = player.Character or player.CharacterAdded:Wait()
+    local hrp = char:FindFirstChild("HumanoidRootPart")
     if hrp then
         basePosition = hrp.Position
-        saveBtn.Text = "✅ Base Guardada"
+        saveBtn.Text = "✅ Guardado"
         wait(1.5)
         saveBtn.Text = "📍 Guardar Base"
     end
 end)
 
--- Función Ir a Base
-walkBtn.MouseButton1Click:Connect(function()
-    if basePosition and humanoid then
-        walkBtn.Text = "🚶 Caminando..."
-        humanoid:MoveTo(basePosition)
+-- Volar hacia la base
+tpBtn.MouseButton1Click:Connect(function()
+    local char = player.Character or player.CharacterAdded:Wait()
+    local hrp = char:FindFirstChild("HumanoidRootPart")
 
-        local reached = humanoid.MoveToFinished:Wait()
-        if reached then
-            walkBtn.Text = "✅ Llegaste"
-        else
-            walkBtn.Text = "⚠️ No se pudo llegar"
+    if basePosition and hrp then
+        moving = true
+        tpBtn.Text = "🚀 Volando..."
+        while moving and (hrp.Position - basePosition).Magnitude > 5 do
+            local direction = (basePosition - hrp.Position).Unit
+            hrp.CFrame = hrp.CFrame + direction * speed
+            wait(0.02)
         end
-
+        moving = false
+        tpBtn.Text = "✅ Llegaste"
         wait(1.5)
-        walkBtn.Text = "🚶 Ir a Base"
+        tpBtn.Text = "🚀 Volar a Base"
     else
-        walkBtn.Text = "❌ Base no guardada"
+        tpBtn.Text = "❌ Base no guardada"
         wait(1.5)
-        walkBtn.Text = "🚶 Ir a Base"
+        tpBtn.Text = "🚀 Volar a Base"
     end
 end)
