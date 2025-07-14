@@ -1,75 +1,71 @@
+-- SCRIPT: Caminar a base sin ser regresado por el servidor
+
 local player = game.Players.LocalPlayer
-local char = player.Character or player.CharacterAdded:Wait()
-local hrp = char:WaitForChild("HumanoidRootPart")
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
 
 local basePosition = nil
-local moving = false
 
--- Forzar Noclip en cada frame
-game:GetService("RunService").Stepped:Connect(function()
-    if moving then
-        for _, v in pairs(char:GetDescendants()) do
-            if v:IsA("BasePart") and v.CanCollide == true then
-                v.CanCollide = false
-            end
-        end
-    end
-end)
+-- Crear GUI
+local gui = Instance.new("ScreenGui")
+gui.Name = "SafeTPGui"
+gui.ResetOnSpawn = false
+gui.Parent = player:WaitForChild("PlayerGui")
 
--- UI
-local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
-gui.Name = "MegaTPGui"
-
-local saveBtn = Instance.new("TextButton", gui)
-saveBtn.Text = "📍 Guardar Base"
+-- Botón Guardar Base
+local saveBtn = Instance.new("TextButton")
+saveBtn.Name = "SaveBaseButton"
+saveBtn.Parent = gui
 saveBtn.Size = UDim2.new(0, 160, 0, 40)
 saveBtn.Position = UDim2.new(0, 20, 0, 100)
-saveBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+saveBtn.Text = "📍 Guardar Base"
+saveBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 saveBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 saveBtn.Font = Enum.Font.SourceSansBold
 saveBtn.TextSize = 18
 
-local tpBtn = Instance.new("TextButton", gui)
-tpBtn.Text = "☠️ Traspasar Forzado"
-tpBtn.Size = UDim2.new(0, 160, 0, 40)
-tpBtn.Position = UDim2.new(0, 20, 0, 150)
-tpBtn.BackgroundColor3 = Color3.fromRGB(100, 0, 0)
-tpBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-tpBtn.Font = Enum.Font.SourceSansBold
-tpBtn.TextSize = 18
+-- Botón Caminar a Base
+local walkBtn = Instance.new("TextButton")
+walkBtn.Name = "WalkToBaseButton"
+walkBtn.Parent = gui
+walkBtn.Size = UDim2.new(0, 160, 0, 40)
+walkBtn.Position = UDim2.new(0, 20, 0, 150)
+walkBtn.Text = "🚶 Ir a Base"
+walkBtn.BackgroundColor3 = Color3.fromRGB(0, 90, 0)
+walkBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+walkBtn.Font = Enum.Font.SourceSansBold
+walkBtn.TextSize = 18
 
--- Guardar Base
+-- Función Guardar Base
 saveBtn.MouseButton1Click:Connect(function()
-    char = player.Character or player.CharacterAdded:Wait()
-    hrp = char:FindFirstChild("HumanoidRootPart")
+    character = player.Character or player.CharacterAdded:Wait()
+    local hrp = character:FindFirstChild("HumanoidRootPart")
     if hrp then
         basePosition = hrp.Position
-        saveBtn.Text = "✅ Guardado"
-        wait(1)
+        saveBtn.Text = "✅ Base Guardada"
+        wait(1.5)
         saveBtn.Text = "📍 Guardar Base"
     end
 end)
 
--- Movimiento directo por CFrame
-tpBtn.MouseButton1Click:Connect(function()
-    if not basePosition then
-        tpBtn.Text = "❌ Sin base guardada"
+-- Función Ir a Base
+walkBtn.MouseButton1Click:Connect(function()
+    if basePosition and humanoid then
+        walkBtn.Text = "🚶 Caminando..."
+        humanoid:MoveTo(basePosition)
+
+        local reached = humanoid.MoveToFinished:Wait()
+        if reached then
+            walkBtn.Text = "✅ Llegaste"
+        else
+            walkBtn.Text = "⚠️ No se pudo llegar"
+        end
+
         wait(1.5)
-        tpBtn.Text = "☠️ Traspasar Forzado"
-        return
+        walkBtn.Text = "🚶 Ir a Base"
+    else
+        walkBtn.Text = "❌ Base no guardada"
+        wait(1.5)
+        walkBtn.Text = "🚶 Ir a Base"
     end
-
-    moving = true
-    local speed = 10 -- Cuanto más alto, más rápido (pero más detectable)
-    
-    while moving and hrp and (hrp.Position - basePosition).Magnitude > 5 do
-        local direction = (basePosition - hrp.Position).Unit
-        hrp.CFrame = hrp.CFrame + direction * speed
-        wait(0.02)
-    end
-
-    moving = false
-    tpBtn.Text = "✅ Llegaste"
-    wait(1.5)
-    tpBtn.Text = "☠️ Traspasar Forzado"
 end)
