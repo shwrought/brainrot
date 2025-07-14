@@ -1,1 +1,51 @@
-# brainrot
+-- UI + TP Script - Guardar y volver a un punto
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local basePosition = nil
+
+-- Crear Interfaz
+local ScreenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+ScreenGui.Name = "TPGui"
+
+local saveBtn = Instance.new("TextButton")
+saveBtn.Parent = ScreenGui
+saveBtn.Text = "📍 Guardar Posición"
+saveBtn.Position = UDim2.new(0, 20, 0, 100)
+saveBtn.Size = UDim2.new(0, 180, 0, 40)
+saveBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+saveBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+saveBtn.Font = Enum.Font.SourceSansBold
+saveBtn.TextSize = 18
+
+local tpBtn = Instance.new("TextButton")
+tpBtn.Parent = ScreenGui
+tpBtn.Text = "🚀 Teleport a Base"
+tpBtn.Position = UDim2.new(0, 20, 0, 150)
+tpBtn.Size = UDim2.new(0, 180, 0, 40)
+tpBtn.BackgroundColor3 = Color3.fromRGB(60, 0, 0)
+tpBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+tpBtn.Font = Enum.Font.SourceSansBold
+tpBtn.TextSize = 18
+
+-- Función para guardar la posición
+saveBtn.MouseButton1Click:Connect(function()
+    character = player.Character or player.CharacterAdded:Wait()
+    if character and character:FindFirstChild("HumanoidRootPart") then
+        basePosition = character.HumanoidRootPart.Position
+        saveBtn.Text = "✅ Posición Guardada"
+        wait(1)
+        saveBtn.Text = "📍 Guardar Posición"
+    end
+end)
+
+-- Función para teletransportar
+tpBtn.MouseButton1Click:Connect(function()
+    character = player.Character or player.CharacterAdded:Wait()
+    if basePosition and character and character:FindFirstChild("HumanoidRootPart") then
+        character.HumanoidRootPart.CFrame = CFrame.new(basePosition + Vector3.new(0, 5, 0))
+    else
+        tpBtn.Text = "⚠️ No hay posición guardada"
+        wait(1.5)
+        tpBtn.Text = "🚀 Teleport a Base"
+    end
+end)
