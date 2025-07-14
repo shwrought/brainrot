@@ -1,90 +1,14 @@
 local player = game.Players.LocalPlayer
-local char = player.Character or player.CharacterAdded:Wait()
-local hrp = char:WaitForChild("HumanoidRootPart")
-local uis = game:GetService("UserInputService")
-local run = game:GetService("RunService")
 
--- Variables de vuelo
-local flySpeed = 5
-local directions = {F = false, B = false, L = false, R = false, U = false, D = false}
-
--- GUI
-local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
-gui.Name = "FlyControlMobile"
-gui.ResetOnSpawn = false
-
-local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0, 160, 0, 160)
-frame.Position = UDim2.new(0, 30, 0, 250)
-frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-frame.Active = true
-frame.Draggable = true
-
--- Función para crear botones
-local function createBtn(text, pos, dirKey)
-	local btn = Instance.new("TextButton", frame)
-	btn.Size = UDim2.new(0, 45, 0, 45)
-	btn.Position = pos
-	btn.Text = text
-	btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-	btn.TextColor3 = Color3.new(1, 1, 1)
-	btn.Font = Enum.Font.SourceSansBold
-	btn.TextSize = 20
-
-	-- Mantener dirección mientras está presionado
-	btn.MouseButton1Down:Connect(function() directions[dirKey] = true end)
-	btn.MouseButton1Up:Connect(function() directions[dirKey] = false end)
-
-	return btn
-end
-
--- Crear botones direccionales
-createBtn("↑", UDim2.new(0, 57, 0, 5), "F")
-createBtn("↓", UDim2.new(0, 57, 0, 105), "B")
-createBtn("←", UDim2.new(0, 10, 0, 55), "L")
-createBtn("→", UDim2.new(0, 105, 0, 55), "R")
-createBtn("⤒", UDim2.new(0, 10, 0, 5), "U")
-createBtn("⤓", UDim2.new(0, 105, 0, 5), "D")
-
--- Botón + velocidad
-local plusBtn = Instance.new("TextButton", frame)
-plusBtn.Size = UDim2.new(0, 45, 0, 45)
-plusBtn.Position = UDim2.new(0, 10, 0, 105)
-plusBtn.Text = "+"
-plusBtn.BackgroundColor3 = Color3.fromRGB(70, 100, 70)
-plusBtn.TextColor3 = Color3.new(1, 1, 1)
-plusBtn.Font = Enum.Font.SourceSansBold
-plusBtn.TextSize = 22
-plusBtn.MouseButton1Click:Connect(function()
-	flySpeed = math.min(flySpeed + 1, 50)
+player.CharacterAdded:Connect(function(char)
+	local hum = char:WaitForChild("Humanoid")
+	hum.WalkSpeed = 200 -- Ajusta la velocidad que desees aquí
 end)
 
--- Botón - velocidad
-local minusBtn = Instance.new("TextButton", frame)
-minusBtn.Size = UDim2.new(0, 45, 0, 45)
-minusBtn.Position = UDim2.new(0, 105, 0, 105)
-minusBtn.Text = "-"
-minusBtn.BackgroundColor3 = Color3.fromRGB(100, 50, 50)
-minusBtn.TextColor3 = Color3.new(1, 1, 1)
-minusBtn.Font = Enum.Font.SourceSansBold
-minusBtn.TextSize = 22
-minusBtn.MouseButton1Click:Connect(function()
-	flySpeed = math.max(1, flySpeed - 1)
-end)
-
--- Movimiento por RenderStepped
-run.RenderStepped:Connect(function()
-	local moveVec = Vector3.new()
-	if directions.F then moveVec += hrp.CFrame.LookVector end
-	if directions.B then moveVec -= hrp.CFrame.LookVector end
-	if directions.L then moveVec -= hrp.CFrame.RightVector end
-	if directions.R then moveVec += hrp.CFrame.RightVector end
-	if directions.U then moveVec += Vector3.new(0, 1, 0) end
-	if directions.D then moveVec -= Vector3.new(0, 1, 0) end
-
-	if moveVec.Magnitude > 0 then
-		hrp.Velocity = moveVec.Unit * flySpeed
-	else
-		hrp.Velocity = Vector3.new(0, 0, 0)
+-- Si el personaje ya está cargado
+if player.Character then
+	local hum = player.Character:FindFirstChildOfClass("Humanoid")
+	if hum then
+		hum.WalkSpeed = 200 -- Velocidad inicial
 	end
-end)
+end
