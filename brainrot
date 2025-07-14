@@ -1,103 +1,117 @@
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local player = Players.LocalPlayer
-local basePos = nil
-local moving = false
-local flyHeight = 300 -- altura para sobrevolar paredes
-local speed = 35
+-- Steal a Brainrot - GUI Táctica
+-- Instant pickup + velocidad + return base
 
+local player = game.Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+local hrp = char:WaitForChild("HumanoidRootPart")
+local humanoid = char:WaitForChild("Humanoid")
+local targetSpawnName = "SpawnLocation" -- Cambia si tu base se llama distinto
+
+-- UI
 local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
-gui.Name = "SkyFlyTP"
+gui.Name = "BrainrotTactico"
 gui.ResetOnSpawn = false
 
-local saveBtn = Instance.new("TextButton", gui)
-saveBtn.Size = UDim2.new(0, 160, 0, 40)
-saveBtn.Position = UDim2.new(0, 20, 0, 100)
-saveBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-saveBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-saveBtn.Text = "📍 Guardar Base"
-saveBtn.Font = Enum.Font.SourceSansBold
-saveBtn.TextSize = 18
-saveBtn.Parent = gui
+-- Frame principal
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0, 220, 0, 180)
+frame.Position = UDim2.new(0, 20, 0, 200)
+frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+frame.BorderSizePixel = 0
 
-local tpBtn = Instance.new("TextButton", gui)
-tpBtn.Size = UDim2.new(0, 160, 0, 40)
-tpBtn.Position = UDim2.new(0, 20, 0, 150)
-tpBtn.BackgroundColor3 = Color3.fromRGB(100, 0, 0)
-tpBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-tpBtn.Text = "🚀 Volar sobre paredes"
-tpBtn.Font = Enum.Font.SourceSansBold
-tpBtn.TextSize = 18
-tpBtn.Parent = gui
+-- Título
+local title = Instance.new("TextLabel", frame)
+title.Text = "🧠 Macro Brainrot"
+title.Size = UDim2.new(1, 0, 0, 30)
+title.TextColor3 = Color3.new(1, 1, 1)
+title.BackgroundTransparency = 1
+title.Font = Enum.Font.SourceSansBold
+title.TextSize = 18
 
-gui.Parent = player:WaitForChild("PlayerGui")
+-- Botón: Recoger Brainrot
+local pickupBtn = Instance.new("TextButton", frame)
+pickupBtn.Text = "⚡ Recoger Brainrot"
+pickupBtn.Size = UDim2.new(1, -20, 0, 40)
+pickupBtn.Position = UDim2.new(0, 10, 0, 40)
+pickupBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+pickupBtn.TextColor3 = Color3.new(1,1,1)
+pickupBtn.Font = Enum.Font.SourceSansBold
+pickupBtn.TextSize = 16
 
--- Forzar Noclip
-RunService.Stepped:Connect(function()
-    if moving then
-        local char = player.Character
-        if char then
-            for _, part in ipairs(char:GetDescendants()) do
-                if part:IsA("BasePart") and part.CanCollide then
-                    part.CanCollide = false
-                end
-            end
+-- Botón: Volver a Base
+local returnBtn = Instance.new("TextButton", frame)
+returnBtn.Text = "🏠 Ir a Base"
+returnBtn.Size = UDim2.new(1, -20, 0, 40)
+returnBtn.Position = UDim2.new(0, 10, 0, 90)
+returnBtn.BackgroundColor3 = Color3.fromRGB(80, 0, 0)
+returnBtn.TextColor3 = Color3.new(1,1,1)
+returnBtn.Font = Enum.Font.SourceSansBold
+returnBtn.TextSize = 16
+
+-- Slider: Velocidad
+local speedLabel = Instance.new("TextLabel", frame)
+speedLabel.Text = "🏃 Velocidad: 16"
+speedLabel.Size = UDim2.new(1, -20, 0, 20)
+speedLabel.Position = UDim2.new(0, 10, 0, 140)
+speedLabel.TextColor3 = Color3.new(1, 1, 1)
+speedLabel.BackgroundTransparency = 1
+speedLabel.Font = Enum.Font.SourceSans
+speedLabel.TextSize = 14
+
+-- FUNCIONES
+
+-- Recojo instantáneo
+pickupBtn.MouseButton1Click:Connect(function()
+    local found = false
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if obj.Name == "Brainrot" and obj:IsA("BasePart") and (obj.Position - hrp.Position).Magnitude <= 15 then
+            firetouchinterest(hrp, obj, 0)
+            wait()
+            firetouchinterest(hrp, obj, 1)
+            found = true
         end
     end
-end)
-
--- Guardar base
-saveBtn.MouseButton1Click:Connect(function()
-    local char = player.Character or player.CharacterAdded:Wait()
-    local hrp = char:FindFirstChild("HumanoidRootPart")
-    if hrp then
-        basePos = hrp.Position
-        saveBtn.Text = "✅ Base Guardada"
-        wait(1.5)
-        saveBtn.Text = "📍 Guardar Base"
-    end
-end)
-
--- Subida, vuelo horizontal, caída
-tpBtn.MouseButton1Click:Connect(function()
-    local char = player.Character or player.CharacterAdded:Wait()
-    local hrp = char:FindFirstChild("HumanoidRootPart")
-    if not basePos or not hrp then
-        tpBtn.Text = "❌ No hay base"
-        wait(1.5)
-        tpBtn.Text = "🚀 Volar sobre paredes"
-        return
-    end
-
-    moving = true
-    tpBtn.Text = "🛫 Elevando..."
-
-    -- 1. Elevar
-    local targetAbove = hrp.Position + Vector3.new(0, flyHeight, 0)
-    while (hrp.Position - targetAbove).Magnitude > 5 do
-        hrp.CFrame = hrp.CFrame + Vector3.new(0, speed, 0)
-        wait(0.02)
-    end
-
-    -- 2. Volar horizontal
-    tpBtn.Text = "🛸 Volando..."
-    local horizontalTarget = Vector3.new(basePos.X, hrp.Position.Y, basePos.Z)
-    while (hrp.Position - horizontalTarget).Magnitude > 5 do
-        local dir = (horizontalTarget - hrp.Position).Unit
-        hrp.CFrame = hrp.CFrame + dir * speed
-        wait(0.02)
-    end
-
-    -- 3. Caer
-    tpBtn.Text = "🪂 Descendiendo..."
-    local finalTarget = basePos + Vector3.new(0, 5, 0)
-    while (hrp.Position - finalTarget).Magnitude > 5 do
-        hrp.CFrame = hrp.CFrame - Vector3.new(0, speed, 0)
-        wait(0.02)
-    end
-
-    moving = false
-    tpBtn.Text = "✅ Llegaste"
+    pickupBtn.Text = found and "✅ Recogido" or "❌ No Brainrot cerca"
     wait(1.5)
-    tpBtn.Text = "🚀 Volar sobre paredes"
+    pickupBtn.Text = "⚡ Recoger Brainrot"
 end)
+
+-- Volver a base automáticamente sin soltar brainrot
+returnBtn.MouseButton1Click:Connect(function()
+    local spawn = workspace:FindFirstChild(targetSpawnName)
+    if spawn then
+        local goal = spawn.Position + Vector3.new(0, 5, 0)
+        local stepSpeed = 20
+        returnBtn.Text = "🏠 Caminando..."
+        while (hrp.Position - goal).Magnitude > 5 do
+            local dir = (goal - hrp.Position).Unit
+            hrp.CFrame = hrp.CFrame + dir * stepSpeed
+            wait(0.02)
+        end
+        returnBtn.Text = "✅ Llegaste"
+    else
+        returnBtn.Text = "❌ No se encontró Spawn"
+    end
+    wait(1.5)
+    returnBtn.Text = "🏠 Ir a Base"
+end)
+
+-- CAMBIAR VELOCIDAD con teclas [+] y [-]: opcional
+local UserInputService = game:GetService("UserInputService")
+local currentSpeed = 16
+
+UserInputService.InputBegan:Connect(function(input, gpe)
+    if gpe then return end
+    if input.KeyCode == Enum.KeyCode.Equals then
+        currentSpeed = currentSpeed + 2
+        humanoid.WalkSpeed = currentSpeed
+        speedLabel.Text = "🏃 Velocidad: " .. tostring(currentSpeed)
+    elseif input.KeyCode == Enum.KeyCode.Minus then
+        currentSpeed = math.max(8, currentSpeed - 2)
+        humanoid.WalkSpeed = currentSpeed
+        speedLabel.Text = "🏃 Velocidad: " .. tostring(currentSpeed)
+    end
+end)
+
+-- Inicializar velocidad
+humanoid.WalkSpeed = currentSpeed
